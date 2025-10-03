@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Settings</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .settings-container {
+            width: 100%;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .settings-form {
+            margin-bottom: 30px;
+        }
+        .settings-form h3 {
+            margin-bottom: 15px;
+        }
+        .settings-form label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .settings-form input, .settings-form select {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .settings-form button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .settings-form button:hover {
+            background-color: #0056b3;
+        }
+        .activity-log {
+            margin-bottom: 30px;
+        }
+        .activity-log table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .activity-log th, .activity-log td {
+            padding: 10px;
+            border: 1px solid #ccc;
+            text-align: left;
+        }
+        .message {
+            margin-top: 10px;
+            padding: 10px;
+            background: #e9ecef;
+            border-radius: 5px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="navigation">
+            <ul>
+                <li>
+                    <a href="#">
+                        <span class="icon">
+                            <ion-icon name="person-circle-outline"></ion-icon>
+                        </span>
+                        <span class="title"><b>Welcome, {{ session['username'] }}</b></span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('admin_dashboard') }}">
+                        <span class="icon">
+                            <ion-icon name="home-outline"></ion-icon>
+                        </span>
+                        <span class="title">Dashboard</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('admins_management') }}">
+                        <span class="icon">
+                            <ion-icon name="person-add-outline"></ion-icon>
+                        </span>
+                        <span class="title">Admins Management</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('driver_management') }}">
+                        <span class="icon">
+                            <ion-icon name="person-add-outline"></ion-icon>
+                        </span>
+                        <span class="title">Drivers Management</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('users_management') }}">
+                        <span class="icon">
+                            <ion-icon name="person-add-outline"></ion-icon>
+                        </span>
+                        <span class="title">Users Management</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('notifications_center') }}">
+                        <span class="icon">
+                            <ion-icon name="notifications-outline"></ion-icon>
+                        </span>
+                        <span class="title">Notifications</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('admin_help') }}">
+                        <span class="icon">
+                            <ion-icon name="help-outline"></ion-icon>
+                        </span>
+                        <span class="title">Help</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('admin_settings') }}">
+                        <span class="icon">
+                            <ion-icon name="settings-outline"></ion-icon>
+                        </span>
+                        <span class="title">Settings</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('logout') }}">
+                        <span class="icon">
+                            <ion-icon name="log-out-outline"></ion-icon>
+                        </span>
+                        <span class="title">Logout</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <div class="main">
+            <div class="topbar">
+                <div class="toggle">
+                    <ion-icon name="menu-outline"></ion-icon>
+                </div>
+                <div class="user">
+                    <img src="{{ url_for('static', filename='images/customer01.jpg') }}" alt="">
+                </div>
+            </div>
+
+            <div class="settings-container">
+                <h2>Admin Settings</h2>
+
+                <!-- Change Password Form -->
+                <div class="settings-form">
+                    <h3>Change Password</h3>
+                    <form method="POST">
+                        <label for="old_password">Old Password:</label>
+                        <input type="password" name="old_password" id="old_password" required>
+                        <label for="new_password">New Password:</label>
+                        <input type="password" name="new_password" id="new_password" required>
+                        <button type="submit">Change Password</button>
+                    </form>
+                </div>
+
+                <!-- System Settings Form -->
+                <div class="settings-form">
+                    <h3>System Settings</h3>
+                    <form method="POST">
+                        <label for="requests_per_page">Requests Per Page:</label>
+                        <select name="requests_per_page" id="requests_per_page">
+                            <option value="5" {% if requests_per_page == 5 %}selected{% endif %}>5</option>
+                            <option value="10" {% if requests_per_page == 10 %}selected{% endif %}>10</option>
+                            <option value="20" {% if requests_per_page == 20 %}selected{% endif %}>20</option>
+                        </select>
+                        <button type="submit">Update Settings</button>
+                    </form>
+                </div>
+
+                <!-- Activity Log -->
+                <div class="activity-log">
+                    <h3>Activity Log</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Activity</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for log in activity_log %}
+                            <tr>
+                                <td>{{ log[0] }}</td>
+                                <td>{{ log[1] }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                {% if message %}
+                <div class="message">{{ message }}</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"></script>
+</body>
+</html>

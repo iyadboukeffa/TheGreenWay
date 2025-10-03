@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Driver Routes</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
+    <style>
+        #routeMap { height: 500px; width: 100%; margin-top: 20px; }
+        .route-table { margin-top: 20px; }
+        .btn-action {
+            background-color: #007bff;
+            color: white;
+            padding: 5px 10px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .btn-action:hover {
+            background-color: #0056b3;
+        }
+        .btn-recalculate {
+            background-color: #28a745;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background-color 0.3s;
+        }
+        .btn-recalculate:hover {
+            background-color: #218838;
+        }
+        tr.completed {
+            opacity: 0.5;
+            text-decoration: line-through;
+        }
+        .route-stats {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+        }
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #333;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.5s;
+        }
+        .toast.show {
+            opacity: 1;
+        }
+        .legend {
+            position: absolute;
+            bottom: 30px;
+            left: 10px;
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 0 5px rgba(0,0,0,0.3);
+            z-index: 1000;
+        }
+        .legend div {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+        .legend img {
+            width: 20px;
+            height: 20px;
+            margin-right: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="navigation">
+            <ul>
+                <li>
+                    <a href="#">
+                        <span class="icon">
+                            <ion-icon name="person-circle-outline"></ion-icon>
+                        </span>
+                        <span class="title"><b>Welcome, {{ session['username'] }}</b></span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('driver_dashboard') }}">
+                        <span class="icon">
+                            <ion-icon name="home-outline"></ion-icon>
+                        </span>
+                        <span class="title">Dashboard</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('driver_tasks') }}">
+                        <span class="icon">
+                            <ion-icon name="list-outline"></ion-icon>
+                        </span>
+                        <span class="title">Tasks</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('driver_routes') }}">
+                        <span class="icon">
+                            <ion-icon name="map-outline"></ion-icon>
+                        </span>
+                        <span class="title">Routes</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('driver_notifications') }}">
+                        <span class="icon">
+                            <ion-icon name="notifications-outline"></ion-icon>
+                        </span>
+                        <span class="title">Notifications</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('driver_help') }}">
+                        <span class="icon">
+                            <ion-icon name="help-outline"></ion-icon>
+                        </span>
+                        <span class="title">Help</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('driver_settings') }}">
+                        <span class="icon">
+                            <ion-icon name="settings-outline"></ion-icon>
+                        </span>
+                        <span class="title">Settings</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('logout') }}">
+                        <span class="icon">
+                            <ion-icon name="log-out-outline"></ion-icon>
+                        </span>
+                        <span class="title">Logout</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <div class="main">
+            <div class="topbar">
+                <div class="toggle">
+                    <ion-icon name="menu-outline"></ion-icon>
+                </div>
+                <div class="user">
+                    <img src="{{ url_for('static', filename='images/customer01.jpg') }}" alt="">
+                </div>
+            </div>
+
+            <div class="details">
+                <div class="recentOrders">
+                    <div class="cardHeader">
+                        <h2>Your Route</h2>
+                    </div>
+                    <div id="routeMap"></div>
+                    <button id="recalculateRoute" class="btn-recalculate">Recalculate Route</button>
+
+                    <div class="cardHeader">
+                        <h2>Route Tasks</h2>
+                    </div>
+                    <table class="route-table">
+                        <thead>
+                            <tr>
+                                <td>Order</td>
+                                <td>Task Type</td>
+                                <td>Location</td>
+                                <td>Details</td>
+                                <td>Distance (km)</td>
+                                <td>Status</td>
+                                <td>Action</td>
+                            </tr>
+                        </thead>
+                        <tbody id="routeTableBody">
+                            {% for task in sorted_locations %}
+                            <tr data-task-id="{{ task.id }}" data-task-type="{{ task.type }}" class="{{ 'completed' if task.status == 'completed' else '' }}">
+                                <td>{{ loop.index }}</td>
+                                <td>{{ task.type }}</td>
+                                <td>{{ task.location }}</td>
+                                <td>{{ task.details }}</td>
+                                <td class="distance">Calculating...</td>
+                                <td>{{ task.status }}</td>
+                                <td>
+                                    {% if task.status == 'approved' %}
+                                    <form action="{{ url_for('start_task', task_type=task.type, task_id=task.id) }}" method="POST" style="display:inline;" class="start-form">
+                                        <button type="submit" class="btn-action">Start</button>
+                                    </form>
+                                    {% elif task.status == 'in_progress' %}
+                                    <form action="{{ url_for('complete_task', task_type=task.type, task_id=task.id) }}" method="POST" style="display:inline;" class="complete-form">
+                                        <button type="submit" class="btn-action">Complete</button>
+                                    </form>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                            {% if not sorted_locations %}
+                            <tr>
+                                <td colspan="7">No tasks in your route yet.</td>
+                            </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+
+                    <div class="route-stats">
+                        <h3>Route Statistics</h3>
+                        <p>Total Distance: <span id="totalDistance">0</span> km</p>
+                        <p>Estimated Time: <span id="estimatedTime">0</span> minutes</p>
+                        <p>Tasks: <span id="taskCount">{{ sorted_locations | length }}</span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"></script>
+    <script>
+        var map = L.map('routeMap').setView([{{ driver_lat }}, {{ driver_lon }}], 13);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+        }).addTo(map);
+
+        var driverMarker = L.marker([{{ driver_lat }}, {{ driver_lon }}]).addTo(map)
+            .bindPopup('<b>Your Location</b>');
+
+        var sortedLocations = {{ sorted_locations | tojson }};
+        var markers = {};
+        var totalDistance = 0;
+
+        // Haversine formula to calculate distance
+        function haversineDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371;
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            return R * c;
+        }
+
+        function updateDistances() {
+            var driverLat = driverMarker.getLatLng().lat;
+            var driverLon = driverMarker.getLatLng().lng;
+            totalDistance = 0;
+            var prevLat = driverLat;
+            var prevLon = driverLon;
+
+            document.querySelectorAll('.distance').forEach(cell => {
+                var row = cell.closest('tr');
+                var taskId = row.getAttribute('data-task-id');
+                var taskType = row.getAttribute('data-task-type');
+                var loc = sortedLocations.find(l => l.id == taskId && l.type === taskType);
+                if (loc) {
+                    var distance = haversineDistance(prevLat, prevLon, loc.latitude, loc.longitude);
+                    cell.textContent = distance.toFixed(2) + ' km';
+                    totalDistance += distance;
+                    prevLat = loc.latitude;
+                    prevLon = loc.longitude;
+                }
+            });
+            updateStats();
+        }
+
+        function updateStats() {
+            document.getElementById('totalDistance').textContent = totalDistance.toFixed(2);
+            var avgSpeed = 40; // km/h
+            var estimatedTime = (totalDistance / avgSpeed) * 60;
+            document.getElementById('estimatedTime').textContent = estimatedTime.toFixed(1);
+            document.getElementById('taskCount').textContent = sortedLocations.length;
+        }
+
+        function showToast(message) {
+            var toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        // Add Legend to Map
+        var legend = L.control({position: 'bottomleft'});
+        legend.onAdd = function(map) {
+            var div = L.DomUtil.create('div', 'legend');
+            div.innerHTML += '<div><img src="https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png"> Trash Bin</div>';
+            div.innerHTML += '<div><img src="https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png"> Maintenance</div>';
+            div.innerHTML += '<div><img src="https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png"> Purchase</div>';
+            return div;
+        };
+        legend.addTo(map);
+
+        // Initial load of markers and route
+        sortedLocations.forEach(function(loc) {
+            var iconColor = loc.type === 'trash_bin' ? 'red' : loc.type === 'maintenance' ? 'blue' : 'green';
+            var markerIcon = L.icon({
+                iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-${iconColor}.png`,
+                iconSize: [25, 41],
+                iconAnchor: [12, 41],
+                popupAnchor: [1, -34]
+            });
+            var marker = L.marker([loc.latitude, loc.longitude], { icon: markerIcon }).addTo(map)
+                .bindPopup(`<b>${loc.type}</b><br>Location: ${loc.location}<br>${loc.details}`);
+            markers[`${loc.type}-${loc.id}`] = marker;
+        });
+
+        var routingControl = null;
+        function updateRoute() {
+            if (routingControl) {
+                map.removeControl(routingControl);
+            }
+            var activeLocations = sortedLocations.filter(loc => {
+                var row = document.querySelector(`tr[data-task-id="${loc.id}"][data-task-type="${loc.type}"]`);
+                return row && !row.classList.contains('completed');
+            });
+            if (activeLocations.length > 0) {
+                var waypoints = [L.latLng(driverMarker.getLatLng().lat, driverMarker.getLatLng().lng)].concat(
+                    activeLocations.map(loc => L.latLng(loc.latitude, loc.longitude))
+                );
+                routingControl = L.Routing.control({
+                    waypoints: waypoints,
+                    routeWhileDragging: true,
+                    show: false,
+                    createMarker: function() { return null; }
+                }).addTo(map);
+            } else if (sortedLocations.length > 0) {
+                alert('All tasks completed!');
+            } else {
+                alert('No tasks to route!');
+            }
+        }
+
+        if (sortedLocations.length > 0) {
+            var group = new L.featureGroup([driverMarker, ...Object.values(markers)]);
+            map.fitBounds(group.getBounds());
+            updateRoute();
+        }
+
+        document.getElementById('recalculateRoute').addEventListener('click', updateRoute);
+
+        function bindForms(className, successMessage) {
+            document.querySelectorAll('.' + className).forEach(form => {
+                form.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    var row = this.closest('tr');
+                    fetch(this.action, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: ''
+                    }).then(response => {
+                        if (response.ok) {
+                            showToast(successMessage);
+                            if (className === 'complete-form') {
+                                row.classList.add('completed');
+                                var taskId = row.getAttribute('data-task-id');
+                                var taskType = row.getAttribute('data-task-type');
+                                var markerKey = `${taskType}-${taskId}`;
+                                if (markers[markerKey]) {
+                                    map.removeLayer(markers[markerKey]);
+                                    delete markers[markerKey];
+                                }
+                            }
+                            location.reload();
+                        } else {
+                            showToast('Action failed.');
+                        }
+                    }).catch(error => {
+                        console.error('Error:', error);
+                        showToast('Error performing action.');
+                    });
+                });
+            });
+        }
+
+        bindForms('start-form', 'Task started!');
+        bindForms('complete-form', 'Task completed!');
+        updateDistances();
+    </script>
+</body>
+</html>

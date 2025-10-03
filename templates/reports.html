@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reports</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+  <div class="sidebar">
+    <h2>Admin Menu</h2>
+    <ul>
+      <li><a href="{{ url_for('admin_dashboard') }}">Dashboard</a></li>
+      <li><a href="{{ url_for('driver_management') }}">Driver Management</a></li>
+      <li><a href="{{ url_for('users_management') }}">Users Management</a></li>
+      <li><a href="{{ url_for('admins_management') }}">Admins Management</a></li>
+      <li><a href="{{ url_for('trash_management') }}">Trash Management</a></li>
+      <li><a href="{{ url_for('notifications_center') }}">Notifications Center</a></li>
+      <li><a href="{{ url_for('reports') }}" class="active">Reports</a></li>
+      <li><a href="{{ url_for('admin_settings') }}">Settings</a></li>
+      <li><a href="{{ url_for('admin_help') }}">Help</a></li>
+      <li><a href="{{ url_for('logout') }}">Logout</a></li>
+    </ul>
+  </div>
+  <div class="content">
+    <h1>Reports</h1>
+    <h2>Daily Activity</h2>
+    <h3>Purchase Requests</h3>
+    <ul>
+      {% for purchase in daily_purchases %}
+      <li>{{ purchase[0] }}: {{ purchase[1] }} requests</li>
+      {% endfor %}
+    </ul>
+    <h3>Trash Notifications</h3>
+    <ul>
+      {% for notification in daily_notifications %}
+      <li>{{ notification[0] }}: {{ notification[1] }} notifications</li>
+      {% endfor %}
+    </ul>
+    <h3>Maintenance Requests</h3>
+    <ul>
+      {% for maintenance in daily_maintenance %}
+      <li>{{ maintenance[0] }}: {{ maintenance[1] }} requests</li>
+      {% endfor %}
+    </ul>
+    <h2>Top Performers</h2>
+    <p><strong>Most Active User:</strong> {{ most_active_user[0] if most_active_user else 'None' }} ({{ most_active_user[1] if most_active_user else 0 }} notifications)</p>
+    <p><strong>Top Driver by Points:</strong> {{ top_driver[0] if top_driver else 'None' }} ({{ top_driver[1] if top_driver else 0 }} points)</p>
+    <p><strong>Top Driver by Tasks:</strong> {{ top_driver_tasks[0] if top_driver_tasks else 'None' }} ({{ top_driver_tasks[1] if top_driver_tasks else 0 }} tasks)</p>
+    <p><strong>Total Drivers:</strong> {{ total_drivers }}</p>
+  </div>
+</body>
+</html>

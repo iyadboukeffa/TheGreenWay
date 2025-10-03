@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Help</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .help-container {
+            width: 100%;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .guide-section {
+            margin-bottom: 30px;
+        }
+        .guide-section h3 {
+            margin-bottom: 15px;
+        }
+        .guide-section ul {
+            list-style-type: disc;
+            padding-left: 20px;
+        }
+        .report-form {
+            margin-bottom: 30px;
+        }
+        .report-form label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .report-form textarea {
+            width: 100%;
+            height: 100px;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .report-form button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .report-form button:hover {
+            background-color: #0056b3;
+        }
+        .message {
+            margin-top: 10px;
+            padding: 10px;
+            background: #e9ecef;
+            border-radius: 5px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="navigation">
+            <ul>
+                <li>
+                    <a href="#">
+                        <span class="icon">
+                            <ion-icon name="person-circle-outline"></ion-icon>
+                        </span>
+                        <span class="title"><b>Welcome, {{ session['username'] }}</b></span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('admin_dashboard') }}">
+                        <span class="icon">
+                            <ion-icon name="home-outline"></ion-icon>
+                        </span>
+                        <span class="title">Dashboard</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('admins_management') }}">
+                        <span class="icon">
+                            <ion-icon name="person-add-outline"></ion-icon>
+                        </span>
+                        <span class="title">Admins Management</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('driver_management') }}">
+                        <span class="icon">
+                            <ion-icon name="person-add-outline"></ion-icon>
+                        </span>
+                        <span class="title">Drivers Management</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('users_management') }}">
+                        <span class="icon">
+                            <ion-icon name="person-add-outline"></ion-icon>
+                        </span>
+                        <span class="title">Users Management</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('notifications_center') }}">
+                        <span class="icon">
+                            <ion-icon name="notifications-outline"></ion-icon>
+                        </span>
+                        <span class="title">Notifications</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('admin_help') }}">
+                        <span class="icon">
+                            <ion-icon name="help-outline"></ion-icon>
+                        </span>
+                        <span class="title">Help</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('admin_settings') }}">
+                        <span class="icon">
+                            <ion-icon name="settings-outline"></ion-icon>
+                        </span>
+                        <span class="title">Settings</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('logout') }}">
+                        <span class="icon">
+                            <ion-icon name="log-out-outline"></ion-icon>
+                        </span>
+                        <span class="title">Logout</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <div class="main">
+            <div class="topbar">
+                <div class="toggle">
+                    <ion-icon name="menu-outline"></ion-icon>
+                </div>
+                <div class="user">
+                    <img src="{{ url_for('static', filename='images/customer01.jpg') }}" alt="">
+                </div>
+            </div>
+
+            <div class="help-container">
+                <h2>Admin Help</h2><br><br>
+
+                <!-- System Management Guide -->
+                <div class="guide-section">
+                    <h3>System Management Guide</h3><br><br>
+                    <ul>
+                        <li><strong>Managing Drivers:</strong> Go to "Drivers Management" to add, edit, or delete drivers. Use the form to add a new driver or the buttons next to each driver to edit/delete.</li>
+                        <li><strong>Managing Users:</strong> Visit "Users Management" to add, edit, or delete users. Similar to drivers, use the form or buttons for actions.</li>
+                        <li><strong>Managing Requests:</strong> In the Dashboard, review "Pending Notifications," "Pending Purchase Requests," and "Pending Maintenance Requests." Click "Approve" or "Reject" to process each request.</li>
+                        <li><strong>Changing Your Password:</strong> Navigate to the "Settings" page from the sidebar. Under the "Change Password" section, enter your current password, then provide a new password and confirm it. Click "Save Changes" to update your password.</li>
+                        <li><strong>Updating Your Profile:</strong> Go to "Settings" to update personal details such as your email or username. Fill in the updated information in the form and click "Save Changes" to apply the updates.</li>
+                        <li><strong>Managing Notifications:</strong> Visit the "Notifications" page to view system messages, such as task updates or user reports. Mark messages as read or delete them as needed using the provided buttons.</li>
+                        <li><strong>Logging Out Safely:</strong> To log out, click the "Logout" option in the sidebar. This ensures your session is securely ended, protecting your account from unauthorized access.</li>
+                        <li><strong>Viewing Admin Activity Logs:</strong> In the "Settings" page, you can find a section for activity logs that track your actions, such as approvals or rejections, for auditing purposes.</li>
+                    </ul>
+                </div>
+
+                <!-- Report a Problem Form -->
+                <div class="report-form">
+                    <h3>Report a Problem</h3><br><br>
+                    <form method="POST">
+                        <label for="problem">Describe the Problem:</label>
+                        <textarea name="problem" id="problem" placeholder="Enter details of the technical issue..." required></textarea><br><br>
+                        <button type="submit">Submit Report</button>
+                    </form>
+                </div>
+
+                {% if message %}
+                <div class="message">{{ message }}</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"></script>
+</body>
+</html>

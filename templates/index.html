@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The GreenWay</title>
+  <!-- Styles -->
+  <link rel="stylesheet" href="static/styles.css">
+  <link rel="stylesheet" href="static/animations.css">
+</head>
+
+<body>
+
+  <section id="hero">
+    <div class="section-box">
+      <div class="content-wrap">
+        <header>
+          <a class="header-logo">The <span>Green</span>Way</a>
+          <nav>
+            <a class="nav-items active">Home</a>
+            <a href="#about" class="nav-items">About Us</a>
+            <a href="#projects" class="nav-items">Projects</a>
+            <a href="#services" class="nav-items">Services</a>
+            <a href="{{ url_for('login') }}" class="nav-items">Login</a>
+            <a href="#join-us" class="nav-items">Contact Us</a>
+          </nav>
+        </header>
+        <div class="hero-content">
+          <h3>protect</h3>
+          <h1>Nature</h1>
+          <img src="static/images/45.png" class="hero-img">
+          <button class="hero-btn">join with us</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="about">
+    <div class="section-box">
+      <div class="content-grid">
+        <div class="left-grid">
+          <h3 class="section-sub">About Us</h3>
+          <h2 class="section-title">Who We Are?</h2>
+          <p>
+            At <b>The GreenWay Platform</b>, we are dedicated to revolutionizing waste management through smart, efficient, and eco-friendly solutions. Our mission is to integrate technology with sustainability, providing innovative trash bins that optimize waste disposal, reduce pollution, and promote a cleaner environment. With a commitment to smart living and environmental responsibility, we strive to make waste management smarter, simpler, and more sustainable for everyone.
+          </p>
+        </div>
+        <div class="right-grid">
+          <img src="static/images/garbage.png" class="about-img">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="projects">
+    <div class="section-box">
+      <div class="content-grid">
+        <div class="right-grid">
+          <img src="static/images/bottle_collection.png" class="about-img">
+        </div>
+        <div class="left-grid">
+          <h3 class="section-sub">Projects</h3>
+          <h2 class="section-title">What We Did?</h2>
+          <p>
+            Project 1 – Smart Connected Bin – A sensor-equipped bin that detects fill levels and optimizes waste collection.<br>
+            Project 2 – Smart Recycling – A system that automatically sorts waste for better recycling.<br>
+            Project 3 – Monitoring Platform – A real-time dashboard for tracking bin status and improving waste management.
+          </p>
+          <button class="action-btn">More Projects</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="services">
+    <div class="section-box">
+      <div class="content-grid">
+        <div class="left-grid">
+          <h3 class="section-sub">Services</h3>
+          <div class="services-list">
+            <div class="service-item">
+              <span class="service-icon">♻️</span>
+              <p><b>Smart Bin Monitoring</b> – Track bin status in real-time using our cutting-edge platform.</p>
+            </div>
+            <div class="service-item">
+              <span class="service-icon">🔧</span>
+              <p><b>Maintenance Requests</b> – Easily and quickly request bin repairs.</p>
+            </div>
+            <div class="service-item">
+              <span class="service-icon">🛒</span>
+              <p><b>Bin Purchasing</b> – Get eco-friendly smart bins tailored to your needs.</p>
+            </div>
+            <div class="service-item">
+              <span class="service-icon">📊</span>
+              <p><b>Admin Oversight</b> – Smart tools for efficient waste collection management.</p>
+            </div>
+          </div>
+          <button class="action-btn" onclick="window.location.href='{{ url_for('login') }}'">Get Started</button>
+        </div>
+        <div class="right-grid">
+          <img src="static/images/services.png" class="about-img services-img">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="join-us">
+    <div class="section-box">
+      <div class="content-wrap">
+        <h3 class="section-sub">Contact Us</h3>
+        <div class="join-form">
+          <input type="text" class="input-1 i1" placeholder="Your Name">
+          <input type="email" class="input-1 i2" placeholder="Your Email">
+          <input type="text" class="input-1 i3" placeholder="Your Number">
+          <input type="text" class="input-1 i4" placeholder="Message">
+          <button class="join-btn">Send</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="footer">
+    <div class="section-box">
+      <div class="footer-grid">
+        <div>
+          <h3>Quick Links</h3>
+          <a class="footer-items f1">Home</a>
+          <a class="footer-items f2">About Us</a>
+          <a class="footer-items f3">Projects</a>
+          <a class="footer-items f4">Services</a>
+          <a class="footer-items f6">Contact Us</a>
+        </div>
+        <div>
+          <h3>Contacts</h3>
+          <a class="footer-items f1">+213 696 39 42 53</a>
+          <a class="footer-items f2">+1 (888) 999-SAVE (7283)</a>
+          <a class="footer-items f3">info@TheGreenWay.org</a>
+          <a class="footer-items f4">1234 GreenWay, Protect Nature, CA 90210</a>
+        </div>
+        <div>
+          <h3>Socials</h3>
+          <a class="footer-items f1">Facebook</a>
+          <a class="footer-items f2">YouTube</a>
+          <a class="footer-items f3">Instagram</a>
+          <a class="footer-items f4">LinkedIn</a>
+          <a class="footer-items f5">Twitter</a>
+        </div>
+      </div>
+      <p class="copyrights">© 2025 TheGreenWay. All Rights Reserved.</p>
+    </div>
+  </section>
+  
+
+</body>
+
+</html>

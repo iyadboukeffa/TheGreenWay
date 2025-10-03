@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Purchase Request</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        #map {
+            height: 400px;
+            width: 100%;
+        }
+        .form-container {
+            margin-top: 20px;
+        }
+        .btn-save {
+            background-color: #28a745; /* Green */
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .btn-save:hover {
+            background-color: #218838; /* Darker green */
+        }
+        .btn-location {
+            background-color: #007bff; /* Blue */
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-left: 10px;
+            transition: background-color 0.3s;
+        }
+        .btn-location:hover {
+            background-color: #0069d9; /* Darker blue */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="navigation">
+            <ul>
+                <li>
+                    <a href="#">
+                        <span class="icon">
+                            <ion-icon name="person-circle-outline"></ion-icon>
+                        </span>
+                        <span class="title"><b>Welcome, {{ session['username'] }}</b></span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('user_dashboard') }}">
+                        <span class="icon">
+                            <ion-icon name="home-outline"></ion-icon>
+                        </span>
+                        <span class="title">Dashboard</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('add_notification') }}">
+                        <span class="icon">
+                            <ion-icon name="notifications-outline"></ion-icon>
+                        </span>
+                        <span class="title">Add Notification</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('request_maintenance') }}">
+                        <span class="icon">
+                            <ion-icon name="send-outline"></ion-icon>
+                        </span>
+                        <span class="title">Request Maintenance</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('buy_trash_bin') }}">
+                        <span class="icon">
+                            <ion-icon name="cash-outline"></ion-icon>
+                        </span>
+                        <span class="title">Buy Trash Bin</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('logout') }}">
+                        <span class="icon">
+                            <ion-icon name="log-out-outline"></ion-icon>
+                        </span>
+                        <span class="title">Logout</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <div class="main">
+            <div class="topbar">
+                <div class="toggle">
+                    <ion-icon name="menu-outline"></ion-icon>
+                </div>
+                <div class="user">
+                    <img src="{{ url_for('static', filename='images/customer01.jpg') }}" alt="">
+                </div>
+            </div>
+
+            <div class="details">
+                <div class="recentOrders">
+                    <div class="cardHeader">
+                        <h2>Edit Purchase Request</h2>
+                    </div>
+                    <div id="map"></div>
+                    <div class="form-container">
+                        <form method="POST">
+                            <label for="bin_type">Trash Bin Type:</label><br>
+                            <select id="bin_type" name="bin_type" required>
+                                <option value="small" {% if purchase[0] == 'small' %}selected{% endif %}>Small (50L - $20)</option>
+                                <option value="medium" {% if purchase[0] == 'medium' %}selected{% endif %}>Medium (100L - $35)</option>
+                                <option value="large" {% if purchase[0] == 'large' %}selected{% endif %}>Large (200L - $50)</option>
+                            </select><br><br>
+                            
+                            <label for="quantity">Quantity:</label><br>
+                            <input type="number" id="quantity" name="quantity" min="1" required value="{{ purchase[1] }}"><br><br>
+                            
+                            <label for="delivery_address">Delivery Address:</label><br>
+                            <input type="text" id="delivery_address" name="delivery_address" required value="{{ purchase[2] }}"><br><br>
+                            
+                            <input type="hidden" id="latitude" name="latitude" value="{{ purchase[3] }}">
+                            <input type="hidden" id="longitude" name="longitude" value="{{ purchase[4] }}">
+                            
+                            <button type="submit" class="btn-save">Save Changes</button>
+                            <button type="button" class="btn-location" onclick="getLocation()">Update Location</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        var map = L.map('map').setView([{{ purchase[3] }}, {{ purchase[4] }}], 15);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        var marker = L.marker([{{ purchase[3] }}, {{ purchase[4] }}]).addTo(map);
+        map.on('click', function(e) {
+            marker.setLatLng(e.latlng);
+            document.getElementById('latitude').value = e.latlng.lat;
+            document.getElementById('longitude').value = e.latlng.lng;
+        });
+
+        function getLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(showPosition, showError);
+            } else {
+                alert("Your browser does not support location services!");
+            }
+        }
+
+        function showPosition(position) {
+            var lat = position.coords.latitude;
+            var lng = position.coords.longitude;
+            var latlng = [lat, lng];
+            
+            marker.setLatLng(latlng);
+            map.setView(latlng, 15);
+            document.getElementById('latitude').value = lat;
+            document.getElementById('longitude').value = lng;
+        }
+
+        function showError(error) {
+            switch(error.code) {
+                case error.PERMISSION_DENIED:
+                    alert("Location access denied. Please enable permissions.");
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    alert("Location information is unavailable.");
+                    break;
+                case error.TIMEOUT:
+                    alert("The request to get location timed out.");
+                    break;
+                case error.UNKNOWN_ERROR:
+                    alert("An unknown error occurred.");
+                    break;
+            }
+        }
+    </script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"></script>
+</body>
+</html>

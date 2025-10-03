@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .btn-approve {
+            background-color: #28a745; /* Green */
+            color: white;
+            padding: 5px 10px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .btn-approve:hover {
+            background-color: #218838; /* Darker green */
+        }
+        .btn-reject {
+            background-color: #dc3545; /* Red */
+            color: white;
+            padding: 5px 10px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            margin-left: 5px;
+            transition: background-color 0.3s;
+        }
+        .btn-reject:hover {
+            background-color: #c82333; /* Darker red */
+        }
+        .recentMessages {
+            margin-top: 20px;
+        }
+        .btn-clear {
+            background-color: #ffc107; /* Yellow */
+            color: black;
+            padding: 5px 15px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background-color 0.3s;
+        }
+        .btn-clear:hover {
+            background-color: #e0a800; /* Darker yellow */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="navigation">
+            <ul>
+                <li>
+                    <a href="#">
+                        <span class="icon">
+                            <ion-icon name="person-circle-outline"></ion-icon>
+                        </span>
+                        <span class="title"><b>Welcome, {{ session['username'] }}</b></span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('admin_dashboard') }}">
+                        <span class="icon">
+                            <ion-icon name="home-outline"></ion-icon>
+                        </span>
+                        <span class="title">Dashboard</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('admins_management') }}">
+                        <span class="icon">
+                            <ion-icon name="person-add-outline"></ion-icon>
+                        </span>
+                        <span class="title">Admins Management</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('driver_management') }}">
+                        <span class="icon">
+                            <ion-icon name="person-add-outline"></ion-icon>
+                        </span>
+                        <span class="title">Drivers Management</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('users_management') }}">
+                        <span class="icon">
+                            <ion-icon name="person-add-outline"></ion-icon>
+                        </span>
+                        <span class="title">Users Management</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('notifications_center') }}">
+                        <span class="icon">
+                            <ion-icon name="notifications-outline"></ion-icon>
+                        </span>
+                        <span class="title">Notifications</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('admin_help') }}">
+                        <span class="icon">
+                            <ion-icon name="help-outline"></ion-icon>
+                        </span>
+                        <span class="title">Help</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('admin_settings') }}">
+                        <span class="icon">
+                            <ion-icon name="settings-outline"></ion-icon>
+                        </span>
+                        <span class="title">Settings</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('logout') }}">
+                        <span class="icon">
+                            <ion-icon name="log-out-outline"></ion-icon>
+                        </span>
+                        <span class="title">Logout</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <div class="main">
+            <div class="topbar">
+                <div class="toggle">
+                    <ion-icon name="menu-outline"></ion-icon>
+                </div>
+                <div class="search">
+                    <form method="POST" action="{{ url_for('admin_dashboard') }}">
+                        <label>
+                            <input type="text" name="search" placeholder="Search here">
+                            <button type="submit" style="background:none;border:none;padding:0;cursor:pointer;">
+                                <ion-icon name="search-outline"></ion-icon>
+                            </button>
+                        </label>
+                    </form>
+                </div>
+                <div class="user">
+                    <img src="{{ url_for('static', filename='images/customer01.jpg') }}" alt="">
+                </div>
+            </div>
+
+            <div class="cardBox">
+                <div class="card">
+                    <div>
+                        <div class="numbers">{{ drivers_count }}</div>
+                        <div class="cardName">Drivers</div>
+                    </div>
+                    <div class="iconBx">
+                        <ion-icon name="people-circle-outline"></ion-icon>
+                    </div>
+                </div>
+                <div class="card">
+                    <div>
+                        <div class="numbers">{{ users_count }}</div>
+                        <div class="cardName">Users</div>
+                    </div>
+                    <div class="iconBx">
+                        <ion-icon name="person-circle-outline"></ion-icon>
+                    </div>
+                </div>
+                <div class="card">
+                    <div>
+                        <div class="numbers">{{ admins_count }}</div>
+                        <div class="cardName">Admins</div>
+                    </div>
+                    <div class="iconBx">
+                        <ion-icon name="people-circle-outline"></ion-icon>
+                    </div>
+                </div>
+                <div class="card">
+                    <div>
+                        <div class="numbers">{{ trash_count }}</div>
+                        <div class="cardName">Pending Requests</div>
+                    </div>
+                    <div class="iconBx">
+                        <ion-icon name="trash-outline"></ion-icon>
+                    </div>
+                </div>
+            </div>
+
+            {% if search_results %}
+            <div class="details">
+                <div class="recentOrders">
+                    <div class="cardHeader">
+                        <h2>Search Results</h2>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <td>Full Name</td>
+                                <td>Username</td>
+                                <td>Email</td>
+                                <td>Role</td>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for result in search_results %}
+                            <tr>
+                                <td>{{ result[0] }}</td>
+                                <td>{{ result[1] }}</td>
+                                <td>{{ result[2] }}</td>
+                                <td>{{ result[3] }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="details">
+                <div class="recentOrders">
+                    <div class="cardHeader">
+                        <h2>Pending Notifications</h2>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <td>ID</td>
+                                <td>Source</td>
+                                <td>Location</td>
+                                <td>Fill %</td>
+                                <td>Status</td>
+                                <td>Date</td>
+                                <td>Actions</td>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for notif in pending_notifications %}
+                            <tr>
+                                <td>{{ notif[0] }}</td>
+                                <td>User</td>
+                                <td>{{ notif[2] }}</td>
+                                <td>{{ notif[3] }}%</td>
+                                <td>{{ notif[6] }}</td>
+                                <td>{{ notif[7].split(' ')[0] }}</td>
+                                <td>
+                                    <form action="{{ url_for('approve_notification', notif_id=notif[0]) }}" method="POST" style="display:inline;">
+                                        <button type="submit" class="btn-approve">Approve</button><br><br>
+                                    </form>
+                                    <form action="{{ url_for('reject_notification', notif_id=notif[0]) }}" method="POST" style="display:inline;">
+                                        <button type="submit" class="btn-reject">Reject</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table><br><br>
+
+                    <div class="cardHeader">
+                        <h2>Pending Arduino Notifications</h2>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <td>ID</td>
+                                <td>Source</td>
+                                <td>Location</td>
+                                <td>Fill %</td>
+                                <td>Status</td>
+                                <td>Date</td>
+                                <td>Actions</td>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if arduino_notifications %}
+                                {% for notif in arduino_notifications %}
+                                    <tr>
+                                        <td>{{ notif[0] }}</td>
+                                        <td>Arduino</td>
+                                        <td>{{ notif[2] }}</td>
+                                        <td>{{ notif[3] }}%</td>
+                                        <td>{{ notif[6] }}</td>
+                                        <td>{{ notif[7].split(' ')[0] }}</td>
+                                        <td>
+                                            <form action="{{ url_for('approve_notification', notif_id=notif[0]) }}" method="POST" style="display:inline;">
+                                                <button type="submit" class="btn-approve">Approve</button><br><br>
+                                            </form>
+                                            <form action="{{ url_for('reject_notification', notif_id=notif[0]) }}" method="POST" style="display:inline;">
+                                                <button type="submit" class="btn-reject">Reject</button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            {% else %}
+                            {% endif %}
+                        </tbody>
+                    </table>
+
+                    <div class="cardHeader" style="margin-top: 20px;">
+                        <h2>Pending Purchase Requests</h2>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <td>User ID</td>
+                                <td>Bin Type</td>
+                                <td>Quantity</td>
+                                <td>Delivery Address</td>
+                                <td>Status</td>
+                                <td>Date</td>
+                                <td>Actions</td>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for purchase in pending_purchases %}
+                            <tr>
+                                <td>{{ purchase[1] }}</td>
+                                <td>{{ purchase[2] }}</td>
+                                <td>{{ purchase[3] }}</td>
+                                <td>{{ purchase[4] }}</td>
+                                <td>{{ purchase[7] }}</td>
+                                <td>{{ purchase[8].split(' ')[0] }}</td>
+                                <td>
+                                    <form action="{{ url_for('approve_purchase', purchase_id=purchase[0]) }}" method="POST" style="display:inline;">
+                                        <button type="submit" class="btn-approve">Approve</button><br><br>
+                                    </form>
+                                    <form action="{{ url_for('reject_purchase', purchase_id=purchase[0]) }}" method="POST" style="display:inline;">
+                                        <button type="submit" class="btn-reject">Reject</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+
+                    <div class="cardHeader" style="margin-top: 20px;">
+                        <h2>Pending Maintenance Requests</h2>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <td>User ID</td>
+                                <td>Location</td>
+                                <td>Problem Type</td>
+                                <td>Status</td>
+                                <td>Date</td>
+                                <td>Actions</td>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for request in pending_maintenance_requests %}
+                            <tr>
+                                <td>{{ request[1] }}</td>
+                                <td>{{ request[2] }}</td>
+                                <td>{{ request[3] }}</td>
+                                <td>{{ request[6] }}</td>
+                                <td>{{ request[7].split(' ')[0] }}</td>
+                                <td>
+                                    <form action="{{ url_for('approve_maintenance', request_id=request[0]) }}" method="POST" style="display:inline;">
+                                        <button type="submit" class="btn-approve">Approve</button><br><br>
+                                    </form>
+                                    <form action="{{ url_for('reject_maintenance', request_id=request[0]) }}" method="POST" style="display:inline;">
+                                        <button type="submit" class="btn-reject">Reject</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="recentCustomers">
+                    <div class="cardHeader">
+                        <h2>Recent Drivers</h2>
+                    </div>
+                    <table>
+                        {% for driver in recent_drivers %}
+                        <tr>
+                            <td width="60px">
+                                <div class="imgBx"><img src="{{ url_for('static', filename='images/customer02.jpg') }}" alt=""></div>
+                            </td>
+                            <td>
+                                <h4>{{ driver[0] }} <br> <span>{{ driver[1] }}</span></h4>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </table>
+
+                    <div class="cardHeader recentMessages">
+                        <h2>Recent Messages</h2>
+                        <form action="{{ url_for('clear_admin_messages') }}" method="POST" style="display:inline;">
+                            <button type="submit" class="btn-clear">Clear</button>
+                        </form>
+                    </div>
+                    <table>
+                        {% for message in recent_messages %}
+                        <tr>
+                            <td width="60px">
+                                <div class="imgBx"><img src="{{ url_for('static', filename='images/customer01.jpg') }}" alt=""></div>
+                            </td>
+                            <td>
+                                <h4>{{ message[0] }} <br> <span>{{ message[1] }}</span></h4>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        {% if not recent_messages %}
+                        <tr>
+                            <td colspan="2">No recent messages.</td>
+                        </tr>
+                        {% endif %}
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"></script>
+</body>
+</html>

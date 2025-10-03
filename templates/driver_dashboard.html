@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Driver Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
+    <style>
+        #map { height: 500px; width: 100%; margin-top: 20px; }
+        .task-table { margin-top: 20px; }
+        .btn-complete {
+            background-color: #007bff;
+            color: white;
+            padding: 5px 10px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .btn-complete:hover {
+            background-color: #0056b3;
+        }
+        .btn-path, .btn-recalculate, .btn-sort, .btn-toggle-map {
+            background-color: #28a745;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+            margin-right: 10px;
+            transition: background-color 0.3s;
+        }
+        .btn-path:hover, .btn-recalculate:hover, .btn-sort:hover, .btn-toggle-map:hover {
+            background-color: #218838;
+        }
+        .btn-location {
+            background-color: #17a2b8;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-bottom: 20px;
+            transition: background-color 0.3s;
+        }
+        .btn-location:hover {
+            background-color: #138496;
+        }
+        tr.completed {
+            opacity: 0.5;
+            text-decoration: line-through;
+        }
+        .progress-container {
+            width: 100%;
+            background-color: #f3f3f3;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .progress-bar {
+            height: 20px;
+            background-color: #4caf50;
+            border-radius: 5px;
+            width: 0%;
+            transition: width 0.3s;
+        }
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #333;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.5s;
+        }
+        .toast.show {
+            opacity: 1;
+        }
+        #map.hidden {
+            display: none;
+        }
+        .weather-info {
+            padding: 10px;
+            text-align: center;
+            color: #fff;
+            background: linear-gradient(90deg, #4b6cb7, #182848);
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+        .legend {
+            position: absolute;
+            bottom: 30px;
+            left: 10px;
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 0 5px rgba(0,0,0,0.3);
+            z-index: 1000;
+        }
+        .legend div {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+        .legend img {
+            width: 20px;
+            height: 20px;
+            margin-right: 5px;
+        }
+        /* New styles for points and promotion card */
+        .stats-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .stats-container span {
+            font-size: 1.5em;
+            margin-right: 15px;
+        }
+        .stats-container .points {
+            color: #2e8b57; /* Green to match the promotion color */
+        }
+        .stats-container .promotion {
+            color: #2e8b57;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="navigation">
+            <ul>
+                <li>
+                    <a href="#">
+                        <span class="icon">
+                            <ion-icon name="person-circle-outline"></ion-icon>
+                        </span>
+                        <span class="title"><b>Welcome, {{ session['username'] }}</b></span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('driver_dashboard') }}">
+                        <span class="icon">
+                            <ion-icon name="home-outline"></ion-icon>
+                        </span>
+                        <span class="title">Dashboard</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('driver_tasks') }}">
+                        <span class="icon">
+                            <ion-icon name="list-outline"></ion-icon>
+                        </span>
+                        <span class="title">Tasks</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('driver_routes') }}">
+                        <span class="icon">
+                            <ion-icon name="map-outline"></ion-icon>
+                        </span>
+                        <span class="title">Routes</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('driver_notifications') }}">
+                        <span class="icon">
+                            <ion-icon name="notifications-outline"></ion-icon>
+                        </span>
+                        <span class="title">Notifications</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('driver_help') }}">
+                        <span class="icon">
+                            <ion-icon name="help-outline"></ion-icon>
+                        </span>
+                        <span class="title">Help</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('driver_settings') }}">
+                        <span class="icon">
+                            <ion-icon name="settings-outline"></ion-icon>
+                        </span>
+                        <span class="title">Settings</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('logout') }}">
+                        <span class="icon">
+                            <ion-icon name="log-out-outline"></ion-icon>
+                        </span>
+                        <span class="title">Logout</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <div class="main">
+            <div class="topbar">
+                <div class="toggle">
+                    <ion-icon name="menu-outline"></ion-icon>
+                </div>
+                <div class="user">
+                    <img src="{{ url_for('static', filename='images/customer01.jpg') }}" alt="">
+                </div>
+            </div>
+
+            <div class="cardBox">
+                <!-- New Card for Points and Promotion -->
+                <div class="card">
+                    <div>
+                        <div class="stats-container">
+                            <span class="points">{{ driver_points }} Points</span>
+                            <span class="promotion">{{ driver_promotion }}</span>
+                        </div>
+                        <div class="cardName">Driver Stats</div>
+                    </div>
+                    <div class="iconBx">
+                    
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div>
+                        <div class="numbers" id="totalTasks">{{ total_tasks }}</div>
+                        <div class="cardName">Total Tasks</div>
+                    </div>
+                    <div class="iconBx">
+                        <ion-icon name="list-outline"></ion-icon>
+                    </div>
+                </div>
+                <div class="card">
+                    <div>
+                        <div class="numbers" id="trashCount">{{ trash_count }}</div>
+                        <div class="cardName">Trash Bins</div>
+                    </div>
+                    <div class="iconBx">
+                        <ion-icon name="trash-outline"></ion-icon>
+                    </div>
+                </div>
+                <div class="card">
+                    <div>
+                        <div class="numbers" id="maintenanceCount">{{ maintenance_count }}</div>
+                        <div class="cardName">Maintenance</div>
+                    </div>
+                    <div class="iconBx">
+                        <ion-icon name="construct-outline"></ion-icon>
+                    </div>
+                </div>
+                <div class="card">
+                    <div>
+                        <div class="numbers" id="purchaseCount">{{ purchase_count }}</div>
+                        <div class="cardName">Purchases</div>
+                    </div>
+                    <div class="iconBx">
+                        <ion-icon name="cart-outline"></ion-icon>
+                    </div>
+                </div>
+                <div class="card">
+                    <div>
+                        <div class="numbers" id="totalDistance">0</div>
+                        <div class="cardName">Total Distance (km)</div>
+                    </div>
+                    <div class="iconBx">
+                        <ion-icon name="map-outline"></ion-icon>
+                    </div>
+                </div>
+                <div class="card">
+                    <div>
+                        <div class="numbers" id="avgTaskTime">0</div>
+                        <div class="cardName">Average Task Time (min)</div>
+                    </div>
+                    <div class="iconBx">
+                        <ion-icon name="time-outline"></ion-icon>
+                    </div>
+                </div>
+            </div>
+
+            <div class="details">
+                <div class="recentOrders">
+                    <div class="cardHeader">
+                        <h2>Your Location</h2>
+                    </div>
+                    <button id="addLocation" class="btn-location">Add Location</button>
+
+                    <div class="cardHeader">
+                        <h2>Map of Approved Tasks</h2>
+                    </div>
+                    <button id="showPath" class="btn-path">Show Shortest Path</button>
+                    <button id="recalculatePath" class="btn-recalculate">Recalculate Path</button>
+                    <button id="toggleMap" class="btn-toggle-map">Hide Map</button>
+                    <div id="map"></div>
+
+                    <div class="cardHeader">
+                        <h2>Approved Tasks List</h2>
+                        <button id="sortByDistance" class="btn-sort">Sort by Distance</button>
+                    </div>
+                    <div class="progress-container">
+                        <div class="progress-bar" id="progressBar"></div>
+                    </div>
+                    <table class="task-table">
+                        <thead>
+                            <tr>
+                                <td>Task Type</td>
+                                <td>Location</td>
+                                <td>Details</td>
+                                <td>Date Reported</td>
+                                <td>Distance (km)</td>
+                                <td>Action</td>
+                            </tr>
+                        </thead>
+                        <tbody id="taskTableBody">
+                            {% for location in locations %}
+                            <tr data-task-id="{{ location.id }}" data-task-type="{{ location.type }}">
+                                <td>{{ location.type }}</td>
+                                <td>{{ location.location }}</td>
+                                <td>{{ location.details }}</td>
+                                <td>{{ location.date }}</td>
+                                <td class="distance">Calculating...</td>
+                                <td>
+                                    <form action="{{ url_for('complete_task', task_type=location.type, task_id=location.id) }}" method="POST" style="display:inline;" class="complete-form">
+                                        <button type="submit" class="btn-complete">Mark as Completed</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                            {% if not locations %}
+                            <tr>
+                                <td colspan="6">No approved tasks yet.</td>
+                            </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"></script>
+    <script>
+        var map = L.map('map').setView([{{ driver_lat }}, {{ driver_lon }}], 13);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+        }).addTo(map);
+    
+        var driverMarker = L.marker([{{ driver_lat }}, {{ driver_lon }}]).addTo(map)
+            .bindPopup('<b>Your Location</b>');
+    
+        var locations = {{ locations | tojson }};
+        var sortedLocations = {{ sorted_locations | tojson }};
+        var markers = {};
+        var completedTasks = 0;
+        var totalDistance = 0;
+        var taskTimes = [];
+        var routeDistance = 0; // To store the total distance of the red line
+    
+        // Haversine formula to calculate distance
+        function haversineDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371;
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            return R * c;
+        }
+    
+        function updateDistances() {
+            var driverLat = driverMarker.getLatLng().lat;
+            var driverLon = driverMarker.getLatLng().lng;
+            document.querySelectorAll('.distance').forEach(cell => {
+                var row = cell.closest('tr');
+                var taskId = row.getAttribute('data-task-id');
+                var taskType = row.getAttribute('data-task-type');
+                var loc = locations.find(l => l.id == taskId && l.type === taskType);
+                if (loc) {
+                    var distance = haversineDistance(driverLat, driverLon, loc.latitude, loc.longitude);
+                    cell.textContent = distance.toFixed(2) + ' km';
+                }
+            });
+        }
+    
+        function updateProgress() {
+            var totalTasks = locations.length;
+            var progress = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
+            document.getElementById('progressBar').style.width = progress + '%';
+        }
+    
+        function updateStats() {
+            document.getElementById('totalDistance').textContent = totalDistance.toFixed(2);
+            var avgTime = taskTimes.length > 0 ? taskTimes.reduce((a, b) => a + b, 0) / taskTimes.length : 0;
+            document.getElementById('avgTaskTime').textContent = avgTime.toFixed(1);
+        }
+    
+        function showToast(message) {
+            var toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+    
+        // Add Legend to Map
+        var legend = L.control({position: 'bottomleft'});
+        legend.onAdd = function(map) {
+            var div = L.DomUtil.create('div', 'legend');
+            div.innerHTML += '<div><img src="https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png"> Trash Bin</div>';
+            div.innerHTML += '<div><img src="https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png"> Maintenance</div>';
+            div.innerHTML += '<div><img src="https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png"> Purchase</div>';
+            return div;
+        };
+        legend.addTo(map);
+    
+        // Add Route Distance Display to Map
+        var routeDistanceControl = L.control({position: 'topright'});
+        routeDistanceControl.onAdd = function(map) {
+            var div = L.DomUtil.create('div', 'info route-distance');
+            div.style.backgroundColor = 'white';
+            div.style.padding = '5px 10px';
+            div.style.borderRadius = '5px';
+            div.style.boxShadow = '0 0 5px rgba(0,0,0,0.3)';
+            div.innerHTML = '<b>Route Distance: </b><span id="routeDistance">0 km</span>';
+            return div;
+        };
+        routeDistanceControl.addTo(map);
+    
+        function updateTasksUI(newLocations) {
+            var oldIds = locations.map(l => `${l.type}-${l.id}`);
+            var newIds = newLocations.map(l => `${l.type}-${l.id}`);
+            var addedTasks = newLocations.filter(l => !oldIds.includes(`${l.type}-${l.id}`));
+    
+            locations = newLocations;
+            var tbody = document.getElementById('taskTableBody');
+            tbody.innerHTML = '';
+    
+            if (newLocations.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6">No approved tasks yet.</td></tr>';
+            } else {
+                newLocations.forEach(function(loc) {
+                    var row = document.createElement('tr');
+                    row.setAttribute('data-task-id', loc.id);
+                    row.setAttribute('data-task-type', loc.type);
+                    row.innerHTML = `
+                        <td>${loc.type}</td>
+                        <td>${loc.location}</td>
+                        <td>${loc.details}</td>
+                        <td>${loc.date}</td>
+                        <td class="distance">Calculating...</td>
+                        <td>
+                            <form action="/complete_task/${loc.type}/${loc.id}" method="POST" style="display:inline;" class="complete-form">
+                                <button type="submit" class="btn-complete">Mark as Completed</button>
+                            </form>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+    
+                    if (!markers[`${loc.type}-${loc.id}`]) {
+                        var iconColor = loc.type === 'trash_bin' ? 'red' : loc.type === 'maintenance' ? 'blue' : 'green';
+                        var markerIcon = L.icon({
+                            iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-${iconColor}.png`,
+                            iconSize: [25, 41],
+                            iconAnchor: [12, 41],
+                            popupAnchor: [1, -34]
+                        });
+                        var marker = L.marker([loc.latitude, loc.longitude], { icon: markerIcon }).addTo(map)
+                            .bindPopup(`<b>${loc.type}</b><br>Location: ${loc.location}<br>${loc.details}`);
+                        marker.on('click', function() {
+                            var driverLat = driverMarker.getLatLng().lat;
+                            var driverLon = driverMarker.getLatLng().lng;
+                            var distance = haversineDistance(driverLat, driverLon, loc.latitude, loc.longitude);
+                            showToast(`Distance to ${loc.type} at ${loc.location}: ${distance.toFixed(2)} km`);
+                        });
+                        markers[`${loc.type}-${loc.id}`] = marker;
+                    }
+                });
+            }
+    
+            addedTasks.forEach(task => showToast(`New task: ${task.type} at ${task.location}`));
+            document.getElementById('totalTasks').textContent = newLocations.length;
+            document.getElementById('trashCount').textContent = newLocations.filter(l => l.type === 'trash_bin').length;
+            document.getElementById('maintenanceCount').textContent = newLocations.filter(l => l.type === 'maintenance').length;
+            document.getElementById('purchaseCount').textContent = newLocations.filter(l => l.type === 'purchase').length;
+    
+            updateDistances();
+            updateProgress();
+            updateStats();
+        }
+        function fetchTasks() {
+            fetch('/driver_dashboard', { method: 'GET' })
+                .then(response => response.text())
+                .then(html => {
+                    var parser = new DOMParser();
+                    var doc = parser.parseFromString(html, 'text/html');
+                    var newLocationsScript = doc.querySelector('script[data-locations]');
+                    if (newLocationsScript) {
+                        var newLocations = JSON.parse(newLocationsScript.getAttribute('data-locations'));
+                        updateTasksUI(newLocations);
+                    }
+                })
+                .catch(error => console.error('Error fetching tasks:', error));
+        }
+    
+        // Initial load of markers
+        locations.forEach(function(loc) {
+            var iconColor = loc.type === 'trash_bin' ? 'red' : loc.type === 'maintenance' ? 'blue' : 'green';
+            var markerIcon = L.icon({
+                iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-${iconColor}.png`,
+                iconSize: [25, 41],
+                iconAnchor: [12, 41],
+                popupAnchor: [1, -34]
+            });
+            var marker = L.marker([loc.latitude, loc.longitude], { icon: markerIcon }).addTo(map)
+                .bindPopup(`<b>${loc.type}</b><br>Location: ${loc.location}<br>${loc.details}`);
+            marker.on('click', function() {
+                var driverLat = driverMarker.getLatLng().lat;
+                var driverLon = driverMarker.getLatLng().lng;
+                var distance = haversineDistance(driverLat, driverLon, loc.latitude, loc.longitude);
+                showToast(`Distance to ${loc.type} at ${loc.location}: ${distance.toFixed(2)} km`);
+            });
+            markers[`${loc.type}-${loc.id}`] = marker;
+        });
+    
+        if (Object.keys(markers).length > 0) {
+            var group = new L.featureGroup([driverMarker, ...Object.values(markers)]);
+            map.fitBounds(group.getBounds());
+        }
+    
+        var routingControl = null;
+        function updateRoute(locationsToRoute) {
+            if (routingControl) {
+                map.removeControl(routingControl);
+            }
+            if (locationsToRoute.length > 0) {
+                var waypoints = [L.latLng(driverMarker.getLatLng().lat, driverMarker.getLatLng().lng)].concat(
+                    locationsToRoute.map(loc => L.latLng(loc.latitude, loc.longitude))
+                );
+                routingControl = L.Routing.control({
+                    waypoints: waypoints,
+                    routeWhileDragging: true,
+                    show: false,
+                    createMarker: function() { return null; },
+                    lineOptions: {
+                        styles: [{color: 'red', weight: 4}] // Red line for the shortest path
+                    }
+                }).addTo(map);
+    
+                routingControl.on('routesfound', function(e) {
+                    var routes = e.routes;
+                    var summary = routes[0].summary;
+                    routeDistance = (summary.totalDistance / 1000).toFixed(2); // Convert meters to kilometers
+                    document.getElementById('routeDistance').textContent = `${routeDistance} km`;
+                    showToast(`Shortest Path Distance: ${routeDistance} km`);
+                });
+            } else {
+                alert('No tasks left to calculate a path for!');
+                document.getElementById('routeDistance').textContent = '0 km';
+            }
+        }
+    
+        document.getElementById('showPath').addEventListener('click', function() {
+            updateRoute(locations);
+        });
+    
+        document.getElementById('recalculatePath').addEventListener('click', function() {
+            var activeLocations = locations.filter(loc => {
+                var row = document.querySelector(`tr[data-task-id="${loc.id}"][data-task-type="${loc.type}"]`);
+                return row && !row.classList.contains('completed');
+            });
+            updateRoute(activeLocations);
+        });
+    
+        document.getElementById('addLocation').addEventListener('click', function() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    var lat = position.coords.latitude;
+                    var lon = position.coords.longitude;
+    
+                    driverMarker.setLatLng([lat, lon]);
+                    map.setView([lat, lon], 13);
+    
+                    fetch('/update_location', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: `latitude=${lat}&longitude=${lon}`
+                    }).then(response => {
+                        if (response.ok) {
+                            alert('Location updated successfully!');
+                            updateDistances();
+                            document.getElementById('recalculatePath').click();
+                        } else {
+                            alert('Failed to update location.');
+                        }
+                    }).catch(error => {
+                        console.error('Error:', error);
+                        alert('Error updating location.');
+                    });
+                }, function(error) {
+                    alert('Could not get your location. Please enable location services.');
+                    console.error('Geolocation error:', error);
+                });
+            } else {
+                alert('Geolocation is not supported by your browser.');
+            }
+        });
+    
+        document.getElementById('sortByDistance').addEventListener('click', function() {
+            var driverLat = driverMarker.getLatLng().lat;
+            var driverLon = driverMarker.getLatLng().lng;
+            locations.sort((a, b) => {
+                var distA = haversineDistance(driverLat, driverLon, a.latitude, a.longitude);
+                var distB = haversineDistance(driverLat, driverLon, b.latitude, b.longitude);
+                return distA - distB;
+            });
+            updateTasksUI(locations);
+        });
+    
+        document.getElementById('toggleMap').addEventListener('click', function() {
+            var mapDiv = document.getElementById('map');
+            if (mapDiv.classList.contains('hidden')) {
+                mapDiv.classList.remove('hidden');
+                this.textContent = 'Hide Map';
+                map.invalidateSize();
+            } else {
+                mapDiv.classList.add('hidden');
+                this.textContent = 'Show Map';
+            }
+        });
+    
+        function bindCompleteForms() {
+            document.querySelectorAll('.complete-form').forEach(form => {
+                form.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    if (confirm('Are you sure you want to complete this task?')) {
+                        var startTime = Date.now();
+                        var row = this.closest('tr');
+                        var taskId = row.getAttribute('data-task-id');
+                        var taskType = row.getAttribute('data-task-type');
+                        var loc = locations.find(l => l.id == taskId && l.type === taskType);
+                        var driverLat = driverMarker.getLatLng().lat;
+                        var driverLon = driverMarker.getLatLng().lng;
+    
+                        fetch(this.action, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded',
+                            },
+                            body: ''
+                        }).then(response => {
+                            if (response.ok) {
+                                row.classList.add('completed');
+                                row.querySelector('.btn-complete').disabled = true;
+                                var markerKey = `${taskType}-${taskId}`;
+                                if (markers[markerKey]) {
+                                    map.removeLayer(markers[markerKey]);
+                                    delete markers[markerKey];
+                                }
+                                completedTasks++;
+                                totalDistance += haversineDistance(driverLat, driverLon, loc.latitude, loc.longitude);
+                                var timeTaken = (Date.now() - startTime) / 60000;
+                                taskTimes.push(timeTaken);
+                                updateProgress();
+                                updateStats();
+                                document.getElementById('recalculatePath').click();
+                            } else {
+                                alert('Failed to mark task as completed.');
+                            }
+                        }).catch(error => {
+                            console.error('Error:', error);
+                            alert('Error completing task.');
+                        });
+                    }
+                });
+            });
+        }
+    
+        bindCompleteForms();
+        setInterval(fetchTasks, 30000);
+        updateDistances();
+        updateProgress();
+        updateStats();
+    
+        var script = document.createElement('script');
+        script.setAttribute('data-locations', JSON.stringify(locations));
+        document.body.appendChild(script);
+    </script>
+</body>
+</html>

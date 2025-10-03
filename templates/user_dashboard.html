@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .btn-delete {
+            background-color: #dc3545; /* Red */
+            color: white;
+            padding: 5px 10px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .btn-delete:hover {
+            background-color: #c82333; /* Darker red */
+        }
+        .btn-edit {
+            background-color: #ffc107; /* Yellow */
+            color: black;
+            padding: 5px 10px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            margin-left: 5px;
+            transition: background-color 0.3s;
+        }
+        .btn-edit:hover {
+            background-color: #e0a800; /* Darker yellow */
+        }
+        .btn-clear {
+            background-color: #6c757d; /* Gray */
+            color: white;
+            padding: 5px 15px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-left: 10px;
+        }
+        .btn-clear:hover {
+            background-color: #5a6268; /* Darker gray */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="navigation">
+            <ul>
+                <li>
+                    <a href="#">
+                        <span class="icon">
+                            <ion-icon name="person-circle-outline"></ion-icon>
+                        </span>
+                        <span class="title"><b>Welcome, {{ session['username'] }}</b></span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('user_dashboard') }}">
+                        <span class="icon">
+                            <ion-icon name="home-outline"></ion-icon>
+                        </span>
+                        <span class="title">Dashboard</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('add_notification') }}">
+                        <span class="icon">
+                            <ion-icon name="notifications-outline"></ion-icon>
+                        </span>
+                        <span class="title">Add Notifications</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('request_maintenance') }}">
+                        <span class="icon">
+                            <ion-icon name="send-outline"></ion-icon>
+                        </span>
+                        <span class="title">Request Maintenance</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('buy_trash_bin') }}">
+                        <span class="icon">
+                            <ion-icon name="cash-outline"></ion-icon>
+                        </span>
+                        <span class="title">Buy Trash Bin</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('help') }}">
+                        <span class="icon">
+                            <ion-icon name="help-outline"></ion-icon>
+                        </span>
+                        <span class="title">Help</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('settings') }}">
+                        <span class="icon">
+                            <ion-icon name="settings-outline"></ion-icon>
+                        </span>
+                        <span class="title">Settings</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('logout') }}">
+                        <span class="icon">
+                            <ion-icon name="log-out-outline"></ion-icon>
+                        </span>
+                        <span class="title">Logout</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <div class="main">
+            <div class="topbar">
+                <div class="toggle">
+                    <ion-icon name="menu-outline"></ion-icon>
+                </div>
+                <div class="search">
+                    <label>
+                        <input type="text" placeholder="Search here">
+                        <ion-icon name="search-outline"></ion-icon>
+                    </label>
+                </div>
+                <div class="user">
+                    <img src="{{ url_for('static', filename='images/customer01.jpg') }}" alt="">
+                </div>
+            </div>
+
+            <div class="cardBox">
+                <div class="card">
+                    <div>
+                        <div class="numbers">{{ notifications_count }}</div>
+                        <div class="cardName">My Requests</div>
+                    </div>
+                    <div class="iconBx">
+                        <ion-icon name="notifications-outline"></ion-icon>
+                    </div>
+                </div>
+                <div class="card">
+                    <div>
+                        <div class="numbers">{{ collected_count }}</div>
+                        <div class="cardName">Processed Requests</div>
+                    </div>
+                    <div class="iconBx">
+                        <ion-icon name="trash-outline"></ion-icon>
+                    </div>
+                </div>
+                <div class="card">
+                    <div>
+                        <div class="numbers">{{ pending_count }}</div>
+                        <div class="cardName">Pending Requests</div>
+                    </div>
+                    <div class="iconBx">
+                        <ion-icon name="hourglass-outline"></ion-icon>
+                    </div>
+                </div>
+            </div>
+
+            <div class="details">
+                <div class="recentOrders">
+                    <div class="cardHeader">
+                        <h2>My Recent Notifications</h2>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <td>Location</td>
+                                <td>Fill %</td>
+                                <td>Status</td>
+                                <td>Date</td>
+                                <td>Actions</td>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for notif in recent_notifications %}
+                            <tr>
+                                <td>{{ notif[1] }}</td>
+                                <td>{{ notif[2] }}%</td>
+                                <td>{{ notif[3] }}</td>
+                                <td>{{ notif[4] }}</td>
+                                <td>
+                                    <form action="{{ url_for('delete_notification', notif_id=notif[0]) }}" method="POST" style="display:inline;">
+                                        <button type="submit" class="btn-delete">Delete</button><br><br>
+                                    </form>
+                                    <a href="{{ url_for('edit_notification', notif_id=notif[0]) }}" class="btn-edit">Edit</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+
+                    <div class="cardHeader" style="margin-top: 20px;">
+                        <h2>My Recent Maintenance Requests</h2>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <td>Location</td>
+                                <td>Problem Type</td>
+                                <td>Status</td>
+                                <td>Date</td>
+                                <td>Actions</td>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for request in recent_maintenance_requests %}
+                            <tr>
+                                <td>{{ request[1] }}</td>
+                                <td>{{ request[2] }}</td>
+                                <td>{{ request[3] }}</td>
+                                <td>{{ request[4] }}</td>
+                                <td>
+                                    <form action="{{ url_for('delete_maintenance', request_id=request[0]) }}" method="POST" style="display:inline;">
+                                        <button type="submit" class="btn-delete">Delete</button><br><br>
+                                    </form>
+                                    <a href="{{ url_for('edit_maintenance', request_id=request[0]) }}" class="btn-edit">Edit</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+
+                    <div class="cardHeader" style="margin-top: 20px;">
+                        <h2>My Recent Purchases</h2>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <td>Bin Type</td>
+                                <td>Quantity</td>
+                                <td>Status</td>
+                                <td>Date</td>
+                                <td>Actions</td>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for purchase in recent_purchases %}
+                            <tr>
+                                <td>{{ purchase[1] }}</td>
+                                <td>{{ purchase[2] }}</td>
+                                <td>{{ purchase[3] }}</td>
+                                <td>{{ purchase[4] }}</td>
+                                <td>
+                                    <form action="{{ url_for('delete_purchase', purchase_id=purchase[0]) }}" method="POST" style="display:inline;">
+                                        <button type="submit" class="btn-delete">Delete</button><br><br>
+                                    </form>
+                                    <a href="{{ url_for('edit_purchase', purchase_id=purchase[0]) }}" class="btn-edit">Edit</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="recentCustomers">
+                    <div class="cardHeader">
+                        <h2>Recent Messages</h2>
+                        <form action="{{ url_for('clear_messages') }}" method="POST" style="display:inline;">
+                            <button type="submit" class="btn-clear">Clear</button>
+                        </form>
+                    </div>
+                    <table>
+                        {% for message in recent_messages %}
+                        <tr>
+                            <td width="60px">
+                                <div class="imgBx"><img src="{{ url_for('static', filename='images/customer01.jpg') }}" alt=""></div>
+                            </td>
+                            <td>
+                                <h4>{{ message[0] }} <br> <span>{{ message[1] }}</span></h4>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"></script>
+</body>
+</html>

@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Driver Tasks</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        #tasks-table { margin-top: 20px; }
+        .btn-start, .btn-complete, .btn-details, .btn-map {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            margin-right: 5px;
+            transition: background-color 0.3s;
+        }
+        .btn-start { background-color: #ffc107; color: black; }
+        .btn-start:hover { background-color: #e0a800; }
+        .btn-complete { background-color: #007bff; color: white; }
+        .btn-complete:hover { background-color: #0056b3; }
+        .btn-details { background-color: #6c757d; color: white; }
+        .btn-details:hover { background-color: #5a6268; }
+        .btn-map { background-color: #28a745; color: white; }
+        .btn-map:hover { background-color: #218838; }
+        .btn-sort { background-color: #17a2b8; color: white; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-bottom: 10px; }
+        .btn-sort:hover { background-color: #138496; }
+        tr.completed { opacity: 0.5; text-decoration: line-through; }
+        tr.in-progress { background-color: #fff3cd; }
+        .progress-container { width: 100%; background-color: #f3f3f3; border-radius: 5px; margin-bottom: 20px; }
+        .progress-bar { height: 20px; background-color: #4caf50; border-radius: 5px; width: 0%; transition: width 0.3s; }
+        .tabs { overflow: hidden; border-bottom: 1px solid #ccc; margin-top: 20px; }
+        .tabs button { background-color: #f1f1f1; float: left; border: none; outline: none; cursor: pointer; padding: 14px 16px; transition: 0.3s; }
+        .tabs button:hover { background-color: #ddd; }
+        .tabs button.active { background-color: #ccc; }
+        .tabcontent { display: none; padding: 20px 0; }
+        .notes-input { width: 100%; padding: 5px; border: 1px solid #ccc; border-radius: 3px; }
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.4); }
+        .modal-content { background-color: #fefefe; margin: 15% auto; padding: 20px; border: 1px solid #888; width: 80%; max-width: 500px; border-radius: 5px; }
+        .close { color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
+        .close:hover, .close:focus { color: black; text-decoration: none; }
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #333;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.5s;
+        }
+        .toast.show { opacity: 1; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="navigation">
+            <ul>
+                <li>
+                    <a href="#">
+                        <span class="icon">
+                            <ion-icon name="person-circle-outline"></ion-icon>
+                        </span>
+                        <span class="title"><b>Welcome, {{ session['username'] }}</b></span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('driver_dashboard') }}">
+                        <span class="icon">
+                            <ion-icon name="home-outline"></ion-icon>
+                        </span>
+                        <span class="title">Dashboard</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('driver_tasks') }}">
+                        <span class="icon">
+                            <ion-icon name="list-outline"></ion-icon>
+                        </span>
+                        <span class="title">Tasks</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('driver_routes') }}">
+                        <span class="icon">
+                            <ion-icon name="map-outline"></ion-icon>
+                        </span>
+                        <span class="title">Routes</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('driver_notifications') }}">
+                        <span class="icon">
+                            <ion-icon name="notifications-outline"></ion-icon>
+                        </span>
+                        <span class="title">Notifications</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('driver_help') }}">
+                        <span class="icon">
+                            <ion-icon name="help-outline"></ion-icon>
+                        </span>
+                        <span class="title">Help</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('driver_settings') }}">
+                        <span class="icon">
+                            <ion-icon name="settings-outline"></ion-icon>
+                        </span>
+                        <span class="title">Settings</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('logout') }}">
+                        <span class="icon">
+                            <ion-icon name="log-out-outline"></ion-icon>
+                        </span>
+                        <span class="title">Logout</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <div class="main">
+            <div class="topbar">
+                <div class="toggle">
+                    <ion-icon name="menu-outline"></ion-icon>
+                </div>
+                <div class="user">
+                    <img src="{{ url_for('static', filename='images/customer01.jpg') }}" alt="">
+                </div>
+            </div>
+
+            <div class="details">
+                <div class="recentOrders">
+                    <div class="cardHeader">
+                        <h2>Task List</h2>
+                    </div>
+                    <button id="sortByDistance" class="btn-sort">Sort by Distance</button>
+                    <button id="sortByDate" class="btn-sort">Sort by Date</button>
+
+                    <div class="progress-container">
+                        <div class="progress-bar" id="progressBar"></div>
+                    </div>
+
+                    <table id="tasks-table">
+                        <thead>
+                            <tr>
+                                <td>Task Type</td>
+                                <td>Location</td>
+                                <td>Details</td>
+                                <td>Date</td>
+                                <td>Status</td>
+                                <td>Notes</td>
+                                <td>Actions</td>
+                            </tr>
+                        </thead>
+                        <tbody id="taskTableBody">
+                            {% for task in tasks %}
+                            <tr class="{{ 'completed' if task.status == 'completed' else 'in-progress' if task.status == 'in_progress' else '' }}"
+                                data-task-id="{{ task.id }}"
+                                data-task-type="{{ task.type }}"
+                                data-lat="{{ task.latitude }}"
+                                data-lon="{{ task.longitude }}"
+                                data-date="{{ task.date }}">
+                                <td>{{ task.type }}</td>
+                                <td>{{ task.location }}</td>
+                                <td>{{ task.details }}</td>
+                                <td>{{ task.date }}</td>
+                                <td>{{ task.status }}</td>
+                                <td>
+                                    <input type="text" class="notes-input" value="{{ task.notes }}" data-id="{{ task.id }}" data-type="{{ task.type }}">
+                                </td>
+                                <td>
+                                    {% if task.status != 'completed' %}
+                                    <form action="{{ url_for('driver_tasks') }}" method="POST" style="display:inline;" class="task-form">
+                                        <input type="hidden" name="task_type" value="{{ task.type }}">
+                                        <input type="hidden" name="task_id" value="{{ task.id }}">
+                                        {% if task.status == 'approved' %}
+                                        <button type="submit" name="action" value="start" class="btn-start">Start Task</button>
+                                        {% endif %}
+                                        <button type="submit" name="action" value="complete" class="btn-complete">Complete</button>
+                                    </form>
+                                    {% endif %}
+                                    <button class="btn-details" data-task='{{ task | tojson }}'>Details</button><br><br>
+                                    <a href="{{ url_for('driver_dashboard') }}" class="btn-map">View </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                            {% if not tasks %}
+                            <tr>
+                                <td colspan="7">No tasks available.</td>
+                            </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+
+                    <div class="tabs">
+                        <button class="tablinks active" onclick="openTab(event, 'ActiveTasks')">Active Tasks</button>
+                        <button class="tablinks" onclick="openTab(event, 'TaskHistory')">Task History</button>
+                    </div>
+
+                    <div id="ActiveTasks" class="tabcontent" style="display: block;">
+                        <h3>Active Tasks</h3>
+                        <!-- Active tasks are already in the table above -->
+                    </div>
+
+                    <div id="TaskHistory" class="tabcontent">
+                        <h3>Task History</h3>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <td>Task Type</td>
+                                    <td>Location</td>
+                                    <td>Details</td>
+                                    <td>Completed Date</td>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for task in tasks if task.status == 'completed' %}
+                                <tr>
+                                    <td>{{ task.type }}</td>
+                                    <td>{{ task.location }}</td>
+                                    <td>{{ task.details }}</td>
+                                    <td>{{ task.date }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="taskModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Task Details</h2>
+            <p><strong>Type:</strong> <span id="modalType"></span></p>
+            <p><strong>Location:</strong> <span id="modalLocation"></span></p>
+            <p><strong>Details:</strong> <span id="modalDetails"></span></p>
+            <p><strong>Date:</strong> <span id="modalDate"></span></p>
+            <p><strong>Status:</strong> <span id="modalStatus"></span></p>
+            <p><strong>Notes:</strong> <span id="modalNotes"></span></p>
+        </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"></script>
+    <script>
+        var tasks = {{ tasks | tojson }};
+        var driverLat = {{ driver_lat }};
+        var driverLon = {{ driver_lon }};
+
+        // Haversine formula
+        function haversineDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371;
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            return R * c;
+        }
+
+        function updateProgress() {
+            var totalTasks = tasks.length;
+            var completedTasks = tasks.filter(t => t.status === 'completed').length;
+            var progress = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
+            document.getElementById('progressBar').style.width = progress + '%';
+        }
+
+        function showToast(message) {
+            var toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        function openTab(evt, tabName) {
+            var tabcontent = document.getElementsByClassName("tabcontent");
+            for (var i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+            }
+            var tablinks = document.getElementsByClassName("tablinks");
+            for (var i = 0; i < tablinks.length; i++) {
+                tablinks[i].classList.remove("active");
+            }
+            document.getElementById(tabName).style.display = "block";
+            evt.currentTarget.classList.add("active");
+        }
+
+        document.getElementById('sortByDistance').addEventListener('click', function() {
+            tasks.sort((a, b) => {
+                var distA = haversineDistance(driverLat, driverLon, a.latitude, a.longitude);
+                var distB = haversineDistance(driverLat, driverLon, b.latitude, b.longitude);
+                return distA - distB;
+            });
+            updateTable();
+        });
+
+        document.getElementById('sortByDate').addEventListener('click', function() {
+            tasks.sort((a, b) => new Date(b.date) - new Date(a.date));
+            updateTable();
+        });
+
+        function updateTable() {
+            var tbody = document.getElementById('taskTableBody');
+            tbody.innerHTML = '';
+            tasks.forEach(task => {
+                var row = document.createElement('tr');
+                row.className = task.status === 'completed' ? 'completed' : task.status === 'in_progress' ? 'in-progress' : '';
+                row.setAttribute('data-task-id', task.id);
+                row.setAttribute('data-task-type', task.type);
+                row.setAttribute('data-lat', task.latitude);
+                row.setAttribute('data-lon', task.longitude);
+                row.setAttribute('data-date', task.date);
+                row.innerHTML = `
+                    <td>${task.type}</td>
+                    <td>${task.location}</td>
+                    <td>${task.details}</td>
+                    <td>${task.date}</td>
+                    <td>${task.status}</td>
+                    <td><input type="text" class="notes-input" value="${task.notes}" data-id="${task.id}" data-type="${task.type}"></td>
+                    <td>
+                        ${task.status !== 'completed' ? `
+                            <form action="/driver_tasks" method="POST" style="display:inline;" class="task-form">
+                                <input type="hidden" name="task_type" value="${task.type}">
+                                <input type="hidden" name="task_id" value="${task.id}">
+                                ${task.status === 'approved' ? '<button type="submit" name="action" value="start" class="btn-start">Start Task</button>' : ''}
+                                <button type="submit" name="action" value="complete" class="btn-complete">Complete</button>
+                            </form>` : ''
+                        }
+                        <button class="btn-details" data-task='${JSON.stringify(task)}'>Details</button>
+                        <a href="/driver_dashboard" class="btn-map">View on Map</a>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+            bindButtons();
+        }
+
+        function bindButtons() {
+            document.querySelectorAll('.task-form').forEach(form => {
+                form.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    var formData = new FormData(this);
+                    var notesInput = this.closest('tr').querySelector('.notes-input');
+                    if (notesInput.value) {
+                        formData.append('notes', notesInput.value);
+                    }
+                    fetch('/driver_tasks', {
+                        method: 'POST',
+                        body: formData
+                    }).then(response => {
+                        if (response.ok) {
+                            location.reload(); // Refresh page to update status
+                        } else {
+                            showToast('Failed to update task.');
+                        }
+                    }).catch(error => {
+                        console.error('Error:', error);
+                        showToast('Error updating task.');
+                    });
+                });
+            });
+
+            document.querySelectorAll('.btn-details').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    var task = JSON.parse(this.getAttribute('data-task'));
+                    document.getElementById('modalType').textContent = task.type;
+                    document.getElementById('modalLocation').textContent = task.location;
+                    document.getElementById('modalDetails').textContent = task.details;
+                    document.getElementById('modalDate').textContent = task.date;
+                    document.getElementById('modalStatus').textContent = task.status;
+                    document.getElementById('modalNotes').textContent = task.notes || 'No notes';
+                    document.getElementById('taskModal').style.display = 'block';
+                });
+            });
+        }
+
+        document.querySelector('.close').addEventListener('click', function() {
+            document.getElementById('taskModal').style.display = 'none';
+        });
+
+        window.onclick = function(event) {
+            var modal = document.getElementById('taskModal');
+            if (event.target == modal) {
+                modal.style.display = 'none';
+            }
+        };
+
+        // Initial setup
+        updateProgress();
+        bindButtons();
+    </script>
+</body>
+</html>
